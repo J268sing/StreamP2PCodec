@@ -1,78 +1,116 @@
-# p2pstream
-This project is a peer to peer live streaming application software that uses centralized peer to
-peer architecture operating on an unstructured network topology. It is implemented in c++ using raw c++ sockets and uses pthread library for `Multithreading`.
-p2pstream uses `peer-to-peer` paradigm on top of the `client-server` model which explains how a peer is both a client and a server. 
+# stream-p2p-codec
 
-### Installation : 
-	 git clone https://github.com/adiitya/p2pstream.git
-	 cd ./p2pstream
-	 make
-_Note_: libvlc, SFML, pthread libraries should be installed before installing this.
-### How it works: 
-1. Start the centralServer - The backbone of the model.
+A peer-to-peer live streaming application utilizing a centralized architecture. The system operates on an unstructured network topology and is implemented in C++ using raw sockets with the `pthread` library for multithreading. 
+
+**stream-p2p-codec** combines a peer-to-peer paradigm with a client-server model, enabling each peer to function as both a client and a server.
+
+---
+
+## Installation
+
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/J268sing/stream-p2p-codec.git
+   cd ./stream-p2p-codec
+   make
+   ```
+
+## Prerequisites
+
+Ensure the following libraries are installed before building:
+- **libvlc**
+- **SFML**
+- **pthread**
+
+---
+
+## Usage
+
+### Start the Central Server
+1. Start the central server (the backbone of the architecture):
 ```sh
-        ./central <Own_IP/IP_of_central_server>
+./central <Your_IP/Server_IP>
 ```
-2. Start the Peer(Client + Server)
+2. Start a peer (acts as both client and server):
 ```sh
-		./server <Own_IP>
-		./client <IP_of_centralServer>
-```		
-_Note :_ For now the user need to manually enter the the File to IP mapping (i.e Name of file ---> IP address of peers having the file - space separated).
-### Architecture
-#### Model: 
-* A central server listening for any request for a file from any peer(Client). It responds with the IP addresses of all the peers having the requested file, by looking up a map of file to IPs. While responding 
-
-* The client then connects to these peers and starts downloading. 
-
-* The peers online when requested for a file, responds with the file. _A peer can serve multiple peers at the same time and can also download packets for streaming for itself._
-_Note_: The files to be served by a peer, should be in the server directory.
-
-### Classes
-p2pstream uses OOP paradigm.
-
-##### These are the core classes used by all the peer classes
-`Connection` class is used by all the peers to establish connection with central-server or any other other peer. 
-* When a peer wants to connect to another peer, this class needs the IP address and port of the peer to connect and create a connection object. 
-* Since a peer can act as both clinet/server so,  when a peer is listening for connections( Server part of a peer),the class takes a sockid as argument and creates a connection object with that peer for futher interactions. This peer can serve other peers on a different `thread` at the same time.
-
-The `Data` class handles all the work related to reading and writing data:
-
-`Data` will always transferred as stream of bytes. During sending/receiving it may be either a string (Eg. while searching for contents over various peers like movie or content name or any query to central server) or it can be a file to be downloaded or uploaded. 
-So we have two derived data classes : `BufferData` and `FileData` inheriting Data class: 
-So for sending or recieving as string we create a bufferData class object
-```cpp 
-	Data* dataObj = new BufferData(char_array, size_of_array);
+./server <Your_IP>
+./client <Central_Server_IP>
 ```
-And for sedning and recieving on or from a file simply creating a FileData object.
-```cpp 
-    Data* dataObj = new FileData(name_of_file, FileData::FTYPE::READ);
-```
-For reading and writing we just need to call the same functions of the Data class(The parent class)
-For sending or receiving, we will use the object of the `connection` class which takes as argument a `Data` object. So basically it can take any of the two data types defined above and handles them accordingly.
+3. ## Note
+- File-to-IP mapping (file name → IP addresses of peers) must currently be entered manually in a space-separated format.
 
-#### UML Diagram
-![uml classes](http://i.imgur.com/EI1FBSZ.jpg?1)
+---
 
-#### Implementation
-* p2pstream is implemented using raw C++ sockets.
-* It uses `pthread` library for Multithreading.
-* It uses `libvlc` for processing the data-received.
-* `SFML` is used for rendering the interface.
+## Architecture
 
-#### Demo
-1. Request by one `Peer` with IP of central-server(Peer asked for the file to be downloaded):
-![client](http://i.imgur.com/9j3mOpq.png?1)
-2. Response by `central-server` with the list of IPs having file:
-![central](http://i.imgur.com/pmTBVME.png?1)
-3. Response by another `peer` with the file:
-![server](http://i.imgur.com/slT6joq.png?1)
-The test was successful with a `peer` serving `multiple peers` and downloading packets at the same time.
-4. Streaming video in `SFML Player`
-![screen](http://i.imgur.com/dR3yNF5.png)
+### System Model
+- A central server handles file requests from peers by mapping file names to the IP addresses of peers storing those files.
+- When a peer requests a file, it connects to the provided peer IPs and downloads the file.
+- Each peer can simultaneously serve multiple other peers and download files for its own streaming needs.
 
-### Contribution
-Feel free to file [issues](https://github.com/adiitya/p2pstream/issues) and submit [pull requests](https://github.com/adiitya/p2pstream/pulls) – contributions are welcome.
+**Note**: Files intended for sharing by a peer must be placed in its `server` directory.
 
-### License:
-p2pstream is licensed under the [MIT License](http://aditya.mit-license.org).
+---
+
+## Key Classes
+
+### **Connection Class**
+- Handles connections between peers and the central server or between two peers.
+- Creates connection objects using the peer's IP address and port.
+- Supports both client and server functionalities for a peer, enabling simultaneous connections across multiple threads.
+
+### **Data Class**
+- Manages data transmission (e.g., file or string transfers) as byte streams.  
+- Includes the following derived classes:
+  - **BufferData**: Handles strings or queries sent as byte arrays.
+    ```cpp
+    Data* dataObj = new BufferData(char_array, size_of_array);
+    ```
+  - **FileData**: Manages file reads or writes.
+    ```cpp
+    Data* dataObj = new FileData(file_name, FileData::FTYPE::READ);
+    ```
+- The `Connection` class processes all data objects, ensuring compatibility with both derived classes.
+
+---
+
+## UML Diagram
+
+![UML Diagram](http://i.imgur.com/EI1FBSZ.jpg?1)
+
+## Implementation
+
+- Implemented using raw C++ sockets.
+- Multithreading is achieved via the `pthread` library.
+- Uses `libvlc` for processing received multimedia data.
+- The interface is rendered using `SFML`.
+
+---
+
+## Demo
+
+1. **Request by one peer** with the IP of the central server (file request):  
+   ![Client Request](http://i.imgur.com/9j3mOpq.png?1)
+
+2. **Response by the central server** with a list of IPs having the file:  
+   ![Central Server Response](http://i.imgur.com/pmTBVME.png?1)
+
+3. **Response by another peer** providing the file:  
+   ![Peer Response](http://i.imgur.com/slT6joq.png?1)
+
+4. **Streaming video** in the SFML player:  
+   ![Streaming Video](http://i.imgur.com/dR3yNF5.png)
+
+The system successfully demonstrated peers serving multiple requests while downloading packets simultaneously.
+
+---
+
+## Contribution
+
+Feel free to file issues and submit pull requests—contributions are welcome.
+
+---
+
+## License
+
+This project is licensed under the **MIT License**.
